@@ -69,7 +69,7 @@ func (c *Client) CountMessageTokens(message *Message) int {
 }
 
 func (c *Client) BuildHistory(prevMsgs *[]Message) (*[]Message, error) {
-	messages := make([]Message, len(*prevMsgs))
+	messages := []Message{}
 	tokensUsage := 0
 
 	if len(*prevMsgs) > 0 && (*prevMsgs)[0].Role == "system" {
@@ -78,13 +78,15 @@ func (c *Client) BuildHistory(prevMsgs *[]Message) (*[]Message, error) {
 	}
 
 	for i := len(*prevMsgs) - 1; i >= 0; i-- {
-		sum := tokensUsage + c.CountMessageTokens(&(*prevMsgs)[i])
+		prevMsg := (*prevMsgs)[i]
+		sum := tokensUsage + c.CountMessageTokens(&prevMsg)
 		if sum > MaxRequestTokens {
 			break
 		}
 
 		tokensUsage = sum
-		messages = append([]Message{(*prevMsgs)[i]}, messages...)
+
+		messages = append([]Message{prevMsg}, messages...)
 	}
 
 	if len(messages) == 0 {
