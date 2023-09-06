@@ -37,10 +37,10 @@ type Request struct {
 	Temperature float32   `json:"temperature"`
 }
 
-func (c *Client) TextCompletion(message []*Message) (*Completion, error) {
+func (c *Client) TextCompletion(message *[]Message) (*Completion, error) {
 	payloadData, err := json.Marshal(Request{
 		Model:       DefaultModel,
-		Messages:    *transformMessagePointers(message),
+		Messages:    *message,
 		Temperature: 1,
 	})
 	if err != nil {
@@ -68,45 +68,28 @@ func (c *Client) CountMessageTokens(message *Message) int {
 	return len(c.tokenizer.client.Encode(message.Content))
 }
 
-func (c *Client) BuildHistory(prevMsgs []*Message) ([]*Message, error) {
-	messages := make([]*Message, len(prevMsgs))
+func (c *Client) BuildHistory(prevMsgs *[]Message) (*[]Message, error) {
+	messages := make([]Message, len(*prevMsgs))
 	tokensUsage := 0
 
-	if len(prevMsgs) > 0 && prevMsgs[0].Role == "system" {
-		messages[0] = prevMsgs[0]
-		tokensUsage = c.CountMessageTokens(messages[0])
+	if len(*prevMsgs) > 0 && (*prevMsgs)[0].Role == "system" {
+		messages[0] = (*prevMsgs)[0]
+		tokensUsage = c.CountMessageTokens(&messages[0])
 	}
 
-	for i := len(prevMsgs) - 1; i >= 0; i-- {
-		sum := tokensUsage + c.CountMessageTokens(prevMsgs[i])
+	for i := len(*prevMsgs) - 1; i >= 0; i-- {
+		sum := tokensUsage + c.CountMessageTokens(&(*prevMsgs)[i])
 		if sum > MaxRequestTokens {
 			break
 		}
 
 		tokensUsage = sum
-		messages = prepend(messages, prevMsgs[i])
+		messages = append([]Message{(*prevMsgs)[i]}, messages...)
 	}
 
 	if len(messages) == 0 {
 		return nil, fmt.Errorf("%s", TokensOverflowError)
 	}
 
-	return messages, nil
-}
-
-func prepend(s []*Message, x *Message) []*Message {
-	s = append(s, nil)
-	copy(s[1:], s)
-	s[0] = x
-	return s
-}
-
-func transformMessagePointers(m []*Message) *[]Message {
-	t := make([]Message, len(m))
-
-	for i, p := range m {
-		t[i] = *p
-	}
-
-	return &t
+	return &messages, nil
 }
