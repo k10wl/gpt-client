@@ -32,15 +32,15 @@ type Message struct {
 }
 
 type Request struct {
-	Model       string     `json:"model"`
-	Messages    []*Message `json:"messages"`
-	Temperature float32    `json:"temperature"`
+	Model       string    `json:"model"`
+	Messages    []Message `json:"messages"`
+	Temperature float32   `json:"temperature"`
 }
 
 func (c *Client) TextCompletion(message []*Message) (*Completion, error) {
 	payloadData, err := json.Marshal(Request{
 		Model:       DefaultModel,
-		Messages:    message,
+		Messages:    *transformMessagePointers(message),
 		Temperature: 1,
 	})
 	if err != nil {
@@ -99,4 +99,14 @@ func prepend(s []*Message, x *Message) []*Message {
 	copy(s[1:], s)
 	s[0] = x
 	return s
+}
+
+func transformMessagePointers(m []*Message) *[]Message {
+	t := make([]Message, len(m))
+
+	for i, p := range m {
+		t[i] = *p
+	}
+
+	return &t
 }
