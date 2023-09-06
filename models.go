@@ -9,7 +9,10 @@ type Model struct {
 	OwnedBy string `json:"owned_by"`
 }
 
-type ModelsList []Model
+type ModelsList struct {
+	Object string  `json:"object"`
+	Data   []Model `json:"data"`
+}
 
 func (c *Client) GetModelsList() (*ModelsList, error) {
 	body, err := c.makeGetRequest(ModelsListRoute)
