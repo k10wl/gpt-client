@@ -73,7 +73,7 @@ func (c *Client) BuildHistory(prevMsgs *[]Message) (*[]Message, error) {
 	tokensUsage := 0
 
 	if len(*prevMsgs) > 0 && (*prevMsgs)[0].Role == "system" {
-		messages[0] = (*prevMsgs)[0]
+		messages = append(messages, (*prevMsgs)[0])
 		tokensUsage = c.CountMessageTokens(&messages[0])
 	}
 
