@@ -6,16 +6,21 @@ import (
 )
 
 type Client struct {
-	apiKey     string
-	httpClient *http.Client
-	tokenizer  *Tokenizer
+	apiKey           string
+	httpClient       *http.Client
+	tokenizer        *Tokenizer
+	maxRequestTokens int
 }
 
 const (
 	DefaultModel = "gpt-3.5-turbo"
 	HTTPTimeout  = 2 * time.Minute
-	// NOTE This should be dynamic
-	MaxRequestTokens = 2048
+	// TODO This should be dynamic
+	MaxRequestTokens = 4096
+
+	System    = "system"
+	Assistant = "assistant"
+	User      = "user"
 )
 
 func NewClient(apiKey string) *Client {
@@ -25,8 +30,9 @@ func NewClient(apiKey string) *Client {
 	}
 
 	return &Client{
-		apiKey:     apiKey,
-		httpClient: &http.Client{Timeout: HTTPTimeout},
-		tokenizer:  tokenizerClient,
+		apiKey:           apiKey,
+		httpClient:       &http.Client{Timeout: HTTPTimeout},
+		tokenizer:        tokenizerClient,
+		maxRequestTokens: MaxRequestTokens,
 	}
 }

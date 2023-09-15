@@ -71,27 +71,27 @@ func (c *Client) CountMessageTokens(message *Message) int {
 func (c *Client) BuildHistory(prevMsgs *[]Message) (*[]Message, error) {
 	messages := []Message{}
 	tokensUsage := 0
-
-	if len(*prevMsgs) > 0 && (*prevMsgs)[0].Role == "system" {
-		messages = append(messages, (*prevMsgs)[0])
-		tokensUsage = c.CountMessageTokens(&messages[0])
+	hasSystemMessage := len(*prevMsgs) > 0 && (*prevMsgs)[0].Role == System
+	if hasSystemMessage {
+		tokensUsage = c.CountMessageTokens(&(*prevMsgs)[0])
 	}
-
 	for i := len(*prevMsgs) - 1; i >= 0; i-- {
 		prevMsg := (*prevMsgs)[i]
+		if prevMsg.Role == System {
+			continue
+		}
 		sum := tokensUsage + c.CountMessageTokens(&prevMsg)
-		if sum > MaxRequestTokens {
+		if sum > c.maxRequestTokens {
 			break
 		}
-
 		tokensUsage = sum
-
 		messages = append([]Message{prevMsg}, messages...)
 	}
-
+	if hasSystemMessage {
+		messages = append([]Message{(*prevMsgs)[0]}, messages...)
+	}
 	if len(messages) == 0 {
 		return nil, fmt.Errorf("%s", TokensOverflowError)
 	}
-
 	return &messages, nil
 }
